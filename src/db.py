@@ -9,7 +9,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 DB_PATH = Path("/tmp/marketpulse.db")
 
 # Use env var if provided (for flexibility), else local SQLite file
-DATABASE_URL = os.getenv("DATABASE_URL", f"sqlite:///{DB_PATH}")
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:////tmp/marketpulse.db")
 
 _engine: Engine | None = None
 
