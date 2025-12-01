@@ -240,6 +240,11 @@ def create_app() -> Flask:
 
     return app
 
+    @app.get("/health")
+    def health():
+        return {"status": "ok"}, 200
+
+
 
 app = create_app()
 
