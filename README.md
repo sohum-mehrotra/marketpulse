@@ -1,4 +1,3 @@
-```markdown
 # ✨ MarketPulse — Real-Time S&P 500 Exploration API + Web App  
 ### *Final Build Anything Project — DS 2024*
 
