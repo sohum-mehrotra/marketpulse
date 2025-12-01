@@ -247,25 +247,91 @@ Defined in:
 
 ---
 
-# 🧠 Design Decisions
 
-### **Why SQLite?**
+## 🧠 Design Decisions
 
-* Extremely portable
-* Deterministic, reproducible database state
-* Perfect for Dockerized student projects
+### **1. Why These Concepts?**
 
-### **Why Flask?**
+**SQLite + SQLAlchemy:**
+Chosen because the project requires a reproducible, portable database aligned with Case Study 06. SQLite provides a zero-config, file-based relational engine that rebuilds cleanly on every deploy, while SQLAlchemy offers a safe, expressive interface for queries and joins.
 
-* Lightweight
-* Great for small data APIs
-* Mirrors the teaching style of DS 2024 & Case Study 06
+**Flask Application Factory:**
+Reflects the architecture taught in class and supports clean modular structure (`app.py`, `db.py`, `queries.py`). This approach also works seamlessly with Docker, pytest, and Render.
 
-### **Why Docker?**
+**Docker Containerization:**
+Provides deterministic, cross-platform reproducibility. The same environment runs locally, in CI, and in the cloud. Avoids issues with Python versions, local databases, and dependency conflicts.
 
-* Eliminates Python version issues
-* Ensures reproducibility
-* Allows Render to deploy the exact same environment
+**HTML Tables instead of JSON:**
+Improves usability for non-technical users browsing the web app. It also showcases templating capabilities (Jinja2) and separation of concerns between data and presentation.
+
+---
+
+### **2. Alternatives Considered (and Why Not Chosen)**
+
+**PostgreSQL:**
+More powerful but requires managed hosting and complicates deployment (credentials, migrations, persistence). SQLite is simpler and guaranteed to work in ephemeral containers.
+
+**FastAPI instead of Flask:**
+FastAPI is modern and type-driven, but Flask matches course content, integrates more naturally with Jinja templates, and keeps the project aligned with Case Study 06.
+
+**Client-side rendering (React, Vue):**
+Would add surface complexity and was unnecessary for project goals. Server-side HTML keeps everything lightweight and fast.
+
+**Raw Python scripts instead of Docker:**
+Would reduce setup time but fails reproducibility requirements. Docker ensures the grader can run everything regardless of OS.
+
+---
+
+### **3. Tradeoffs (Performance, Cost, Complexity, Maintainability)**
+
+| Area                | Tradeoff                                                                                                                                                               |
+| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Performance**     | SQLite is fast for read-heavy workloads but not built for high concurrency. Suitable for this project; not ideal for large-scale writes.                               |
+| **Cost**            | Render free tier can cold-start (30–60s delay). A paid tier would offer faster startup but unnecessary for the project scope.                                          |
+| **Complexity**      | Docker introduces upfront learning curve but dramatically improves reproducibility and deployment reliability.                                                         |
+| **Maintainability** | The modular structure (`src/app.py`, `db.py`, `queries.py`) improves maintainability. Choosing Flask keeps the codebase readable for future students or collaborators. |
+
+---
+
+### **4. Security & Privacy**
+
+* **Secrets Management:**
+  The project uses `.env` and `.env.example` to keep secrets out of the repository. Render stores environment variables securely.
+
+* **Input Validation:**
+  Ticker input is sanitized before lookup to prevent SQL injection (SQLAlchemy parameterized queries already protect this).
+
+* **PII Handling:**
+  No personally identifiable information is stored or processed. All data comes from publicly available S&P 500 datasets.
+
+* **Surface Area Minimization:**
+  Only a small number of endpoints are exposed, reducing attack surface. No admin or write endpoints exist.
+
+---
+
+### **5. Operational Considerations (Ops)**
+
+**Logs:**
+Gunicorn provides per-request logs in Render’s dashboard (status codes, paths, latency). Debugging SQL or application errors is straightforward.
+
+**Metrics:**
+Render free tier has limited metrics, but logs give insight into request volume and failures.
+
+**Scaling:**
+The architecture is scalable within limits:
+
+* Horizontal scaling works because the app is stateless
+* SQLite is a bottleneck for writes but acceptable for read-heavy workloads
+* A production upgrade would swap SQLite → PostgreSQL
+
+**Known Limitations:**
+
+* Render free tier sleeps → cold start delays
+* SQLite database resets on each deploy (ephemeral storage)
+* No caching layer (e.g., Redis)
+* Large CSVs would increase startup time
+* Concurrency limited by Gunicorn worker count (default 4)
+
 
 ---
 
