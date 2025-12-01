@@ -22,5 +22,4 @@ RUN ls -R /app
 
 # Render uses PORT env variable
 ENV PORT=8080
-
-CMD ["gunicorn", "src.app:app", "--bind", "0.0.0.0:${PORT}"]
+CMD gunicorn src.app:app --bind 0.0.0.0:$PORT
