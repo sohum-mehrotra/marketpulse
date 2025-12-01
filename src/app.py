@@ -11,6 +11,64 @@ from . import queries
 metrics = Counter()
 START_TIME = time.time()
 
+def render_table(title, rows, columns):
+    html = f"""
+    <html>
+    <head>
+        <title>{title}</title>
+        <style>
+            body {{ font-family: Arial, sans-serif; padding: 20px; }}
+            h1 {{ text-align: center; }}
+            table {{
+                width: 90%;
+                border-collapse: collapse;
+                margin: 20px auto;
+                font-size: 16px;
+            }}
+            th, td {{
+                border: 1px solid #ccc;
+                padding: 8px 12px;
+                text-align: left;
+            }}
+            th {{
+                background-color: #007BFF;
+                color: white;
+            }}
+            tr:nth-child(even) {{
+                background-color: #f2f2f2;
+            }}
+            a {{
+                color: #007BFF;
+                text-decoration: none;
+            }}
+        </style>
+    </head>
+    <body>
+        <h1>{title}</h1>
+        <table>
+            <tr>
+    """
+    # Add table headers
+    for col in columns:
+        html += f"<th>{col}</th>"
+    html += "</tr>"
+
+    # Add table rows
+    for r in rows:
+        html += "<tr>"
+        for col in columns:
+            html += f"<td>{r.get(col, '')}</td>"
+        html += "</tr>"
+
+    html += """
+        </table>
+        <p style="text-align:center;"><a href="/">Back to Home</a></p>
+    </body>
+    </html>
+    """
+    return html
+
+
 
 def create_app() -> Flask:
     # Initialize DB (idempotent)
@@ -112,12 +170,13 @@ def create_app() -> Flask:
     def health():
         return jsonify({"status": "ok", "uptime_seconds": int(time.time() - START_TIME)})
 
-    @app.get("/companies")
+    @app.route("/companies")
     def companies():
-        sector = request.args.get("sector")
-        limit = request.args.get("limit", default=50, type=int)
-        df = queries.get_companies(limit=limit, sector=sector)
-        return jsonify(df.to_dict(orient="records"))
+        from .queries import get_all_companies
+        rows = get_all_companies()
+        columns = ["symbol", "shortname", "sector", "industry", "currentprice", "marketcap"]
+        return render_table("S&P 500 Companies", rows, columns)
+
 
     @app.get("/company/<symbol>")
     def company(symbol: str):
@@ -134,24 +193,34 @@ def create_app() -> Flask:
         return redirect(f"/company/{symbol}")
 
 
-    
-    @app.get("/sectors")
+    @app.route("/sectors")
     def sectors():
-        df = queries.get_sectors()
-        return jsonify(df["Sector"].tolist())
+        from .queries import get_sectors
+        rows = [{"sector": s} for s in get_sectors()]
+        return render_table("Sectors", rows, ["sector"])
 
-    @app.get("/sector/<sector>/companies")
-    def sector_companies(sector: str):
-        df = queries.get_sector_companies_with_stats(sector)
-        if df.empty:
-            return jsonify({"error": "Sector not found"}), 404
-        return jsonify(df.to_dict(orient="records"))
+    
+    @app.route("/company/<symbol>")
+    def company_profile(symbol):
+        from .queries import get_company_by_symbol
+        c = get_company_by_symbol(symbol.upper())
+    
+        if c is None:
+            return f"<h1>Company '{symbol}' not found.</h1><p><a href='/'>Back</a></p>", 404
+    
+        # convert to table structure
+        rows = [c]
+        cols = list(c.keys())
+        return render_table(f"Company: {symbol}", rows, cols)
+    
 
-    @app.get("/index")
-    def index_history():
-        limit = request.args.get("limit", default=100, type=int)
-        df = queries.get_index_history(limit=limit)
-        return jsonify(df.to_dict(orient="records"))
+    @app.route("/index")
+    def index_page():
+        from .queries import get_index_data
+        rows = get_index_data()
+        columns = ["date", "open", "high", "low", "close", "volume"]
+        return render_table("S&P 500 Index Data", rows, columns)
+
 
     @app.get("/metrics")
     def metrics_endpoint():
