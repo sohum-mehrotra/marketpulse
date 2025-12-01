@@ -333,17 +333,3 @@ marketpulse/
 
 **Live Deployment (Render):**
 [https://marketpulse-api-spwg.onrender.com](https://marketpulse-api-spwg.onrender.com)
-
-```
-
----
-
-If you want, I can also:
-
-✅ Add screenshot placeholders customized to your UI  
-✅ Generate a nicer Bootstrap homepage  
-✅ Add charts to `/index`  
-✅ Add JSON endpoints next to HTML views  
-
-Just tell me!
-```
