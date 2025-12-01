@@ -195,7 +195,7 @@ Shows the most recent 300 records of daily index levels.
 
 ---
 
-# 📊 Screenshots (To Be Added)
+# 📊 Screenshots
 
 Add images inside `assets/screenshots/` and embed below:
 
