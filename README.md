@@ -201,23 +201,23 @@ Add images inside `assets/screenshots/` and embed below:
 
 ### **Homepage**
 
-`![homepage](assets/screenshots/home.png)`
+![homepage](assets/screenshots/homepage.png)
 
 ### **Companies View**
 
-`![companies](assets/screenshots/companies.png)`
+![companies](assets/screenshots/companies.png)
 
 ### **Sector Page**
 
-`![sectors](assets/screenshots/sectors.png)`
+![sectors](assets/screenshots/sectors.png)
 
 ### **Index History**
 
-`![index](assets/screenshots/index.png)`
+![index](assets/screenshots/index.png)
 
 ### **Symbol Search**
 
-`![search](assets/screenshots/search.png)`
+![search](assets/screenshots/search.png)
 
 ---
 
