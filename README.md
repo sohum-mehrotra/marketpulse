@@ -41,41 +41,36 @@ This project incorporates the following concepts emphasized in Case Study 06:
 
 # 🖼️ Architecture Diagram
 
-```
-
-```
-                     +-------------------------+
-                     |    sp500_companies.csv  |
-                     +------------+------------+
-                                  |
-                                  v
-                     +-------------------------+
-                     |                         |
-                     |    init_db() Loader     |
-                     |  (pandas → SQLite DB)   |
-                     |                         |
-                     +------------+------------+
-                                  |
-                     +-------------------------+
-                     |     SQLite Database     |
-                     |  companies, index_hist  |
-                     |  sector_stats (derived) |
-                     +------------+------------+
-                                  |
- +------------------------+-------+-------+------------------------+
- |                        |               |                        |
- v                        v               v                        v
-```
-
-/api/companies       /api/company/<symbol>   /index          /sectors
-HTML Table           HTML Table               HTML Table      HTML Table
-^                        ^               ^                        ^
-|                        |               |                        |
-+----------- Flask Application Factory +--------------------------+
+                         +-------------------------+
+                         |    sp500_companies.csv  |
+                         |      sp500_index.csv    |
+                         +------------+------------+
+                                      |
+                                      v
+                         +-------------------------+
+                         |                         |
+                         |    init_db() Loader     |
+                         |  (pandas → SQLite DB)   |
+                         |                         |
+                         +------------+------------+
+                                      |
+                         +-------------------------+
+                         |     SQLite Database     |
+                         |  companies, index_hist  |
+                         |  sector_stats (derived) |
+                         +------------+------------+
+                                      |
+     +------------------------+-------+-------+------------------------+
+     |                        |               |                        |
+     v                        v               v                        v
+/companies            /company/<symbol>      /index                 /sectors
+HTML Table           HTML Table             HTML Table             HTML Table
+     ^                        ^               ^                        ^
+     |                        |               |                        |
+     +----------- Flask Application Factory +--------------------------+
 
 Docker Container → GitHub Actions (CI) → Render Cloud Deployment
 
-````
 
 ---
 
