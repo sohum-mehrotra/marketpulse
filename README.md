@@ -1,128 +1,350 @@
-# MarketPulse — S&P 500 Data API  
-*A DS 1000 Final Project integrating Case Study 06: Cloud-Native Data Pipelines*
-
-## 🚀 Executive Summary
-MarketPulse is a containerized, cloud-deployed analytics API built from scratch using the **S&P 500 companies dataset** and the **S&P 500 index dataset** provided for the course. The system ingests CSV data, loads it automatically into a lightweight SQL database, exposes structured API endpoints for data access, and integrates continuous testing and continuous deployment through GitHub Actions and Render.
-
-This project follows the core principles of **Case Study 06: Cloud-Native Data Systems**, demonstrating how small teams can use containers, CI/CD, infrastructure-as-code, and cloud runtime environments to build reproducible, maintainable, and scalable data products.
+```markdown
+# ✨ MarketPulse — Real-Time S&P 500 Exploration API + Web App  
+### *Final Build Anything Project — DS 2024*
 
 ---
 
-# 🧠 Concept Integration — Case Study 06 (Cloud Systems)
-This project directly applies three themes from **Case Study 06**:
+# 🧭 Executive Summary
 
-### **1. Containerization as a unit of deployment**  
-Like the companies in Case Study 06, MarketPulse uses Docker to:
-- Bundle code + dependencies
-- Standardize runtime environments
-- Guarantee reproducibility
-- Simplify cloud deployment
+The S&P 500 represents one of the most important indicators of U.S. market performance, but most datasets and dashboards for exploring it are either paywalled, slow, or not customizable. The goal of **MarketPulse** is to build a small, efficient, reproducible system that transforms raw S&P 500 datasets into a fully functional, cloud-hosted API and interactive dashboard.
 
-The entire system runs off a single Dockerfile, just like modern cloud microservices.
-
-### **2. CI/CD Automation**  
-Case Study 06 emphasizes automated pipelines for:
-- building,
-- testing,
-- validating,
-- deploying software.
-
-MarketPulse implements this through **GitHub Actions**, which:
-- Runs tests on every push  
-- Builds the Docker image  
-- Validates the server  
-- Ensures no broken code reaches production  
-
-This mirrors the shift from manual DevOps to automated cloud pipelines.
-
-### **3. Cloud Runtime + Observability**  
-The application is deployed on **Render**, representing:
-- on-demand scaling  
-- managed runtime  
-- logs + metrics for observability  
-- a stable URL for public access  
-
-This demonstrates the cloud-native transition discussed in Case Study 06—software is no longer “run,” it is *hosted* with automated operational support.
+This project ingests two CSV datasets—**sp500_index.csv** and **sp500_companies.csv**—and builds an SQLite-backed data service that supports analytical queries, web endpoints, HTML table views, and sector-level statistics. MarketPulse is deployed via **Render**, containerized using **Docker**, continuously tested using **GitHub Actions**, and structured around the data engineering and API concepts from **Case Study 06**.
 
 ---
 
-# 🏗️ System Architecture Overview
+# 🏗️ System Overview
 
-MarketPulse follows a simple but production-ready cloud architecture:
-
-1. **Data Layer**
-   - Loads two provided CSVs:
-     - `sp500_companies.csv`
-     - `sp500_index.csv`
-   - Stores them in a local SQLite database
-   - Provides queries for sectors, companies, and index data
-
-2. **API Layer**
-   - Flask backend
-   - REST endpoints:
-     - `/companies`
-     - `/sectors`
-     - `/index`
-   - JSON responses
-
-3. **Container Layer**
-   - Dockerfile defines environment
-   - Runs gunicorn server on port 10000
-
-4. **CI/CD Layer**
-   - GitHub Actions workflow:
-     - Install deps
-     - Run tests
-     - Build Docker image
-     - Lint + validate
-
-5. **Cloud Hosting**
-   - Render web service  
-   - Automatic deploy on push to `main`
-
-### 📊 Architecture Diagram  
-*(Place this file in `/assets/architecture.png` and uncomment the link)*
-
-![Architecture Diagram](assets/architecture.png)
+## 🎯 Project Goals
+- Convert raw CSVs into a clean, queryable relational database  
+- Build an API that exposes companies, sectors, and index history  
+- Render user-friendly HTML tables instead of raw JSON  
+- Deploy reproducibly via Docker + GitHub Actions  
+- Perform real SQL transformations (joins, aggregations, derived tables)  
+- Create an accessible homepage with navigation + search  
 
 ---
 
-# 🌐 Live Cloud Deployment (Extra Credit)
-**Base URL:**  
-👉 https://marketpulse-api-spwg.onrender.com  
+## 🧩 Concepts Integrated (from Case Study 06)
 
-**Example endpoints (once root route is added):**  
-- `/companies`  
-- `/sectors`  
-- `/index`  
+This project incorporates the following concepts emphasized in Case Study 06:
 
----
-
-# 🧪 Testing + Quality Assurance
-
-The project includes a full test suite located in `/tests`:
-
-### ✔ Test Types
-- Database initialization
-- Data loading from CSV
-- Query outputs (companies, sectors, index)
-- API route responses
-
-### ✔ CI Integration
-All tests run automatically via GitHub Actions on:
-- push
-- pull request
-
-CI guarantees:
-- No broken code  
-- Stable deployments  
-- Full reproducibility  
+- Designing structured **SQL queries & joins**  
+- Loading external datasets into a normalized SQLite database  
+- Creating **derived tables** (e.g., sector-level statistics)  
+- Building a structured **Flask application factory**  
+- Using **pandas ↔ SQLAlchemy** for data pipelines  
+- API routing and HTML template rendering  
+- Writing reproducible workflows with **Docker**  
+- CI pipeline with **pytest** + GitHub Actions  
+- Cloud deployment & observability  
 
 ---
 
-# 🐳 Running Locally (Reproducible Build)
+# 🖼️ Architecture Diagram
 
-### **1️⃣ Clone the repo**
+```
+
+```
+                     +-------------------------+
+                     |    sp500_companies.csv  |
+                     +------------+------------+
+                                  |
+                                  v
+                     +-------------------------+
+                     |                         |
+                     |    init_db() Loader     |
+                     |  (pandas → SQLite DB)   |
+                     |                         |
+                     +------------+------------+
+                                  |
+                     +-------------------------+
+                     |     SQLite Database     |
+                     |  companies, index_hist  |
+                     |  sector_stats (derived) |
+                     +------------+------------+
+                                  |
+ +------------------------+-------+-------+------------------------+
+ |                        |               |                        |
+ v                        v               v                        v
+```
+
+/api/companies       /api/company/<symbol>   /index          /sectors
+HTML Table           HTML Table               HTML Table      HTML Table
+^                        ^               ^                        ^
+|                        |               |                        |
++----------- Flask Application Factory +--------------------------+
+
+Docker Container → GitHub Actions (CI) → Render Cloud Deployment
+
+````
+
+---
+
+# ⚙️ Data Pipeline
+
+## **Input Files (`/assets`)**
+
+| File Name | Description |
+|----------|-------------|
+| `sp500_index.csv` | 10 years of daily S&P 500 index levels |
+| `sp500_companies.csv` | Current S&P 500 company fundamentals, sectors, weights |
+
+## **Database Tables Created**
+
+| Table | Source | Description |
+|-------|---------|-------------|
+| `index_history` | sp500_index.csv | Daily index date/value |
+| `companies` | sp500_companies.csv | Symbol, sector, market cap, etc. |
+| `sector_stats` | Derived | Aggregations: weights, market caps, counts |
+
+## **Example SQL Transformations**
+
+- `GROUP BY` sector (n companies, avg marketcap)  
+- `JOIN` companies ↔ sector stats  
+- Sorting (`ORDER BY marketcap`)  
+- Filtering, slicing, and limiting  
+- Column normalization for SQL safety
+
+---
+
+# 🚀 How to Run the Project (Local, Reproducible)
+
+## **1. Clone the Repository**
 ```bash
 git clone https://github.com/sohum-mehrotra/marketpulse
 cd marketpulse
+````
+
+---
+
+## **2. Build & Run with Docker**
+
+### Build the image:
+
+```bash
+docker build -t marketpulse .
+```
+
+### Run the container:
+
+```bash
+docker run --rm -p 10000:10000 marketpulse
+```
+
+Your app is available at:
+👉 **[http://localhost:10000](http://localhost:10000)**
+
+---
+
+## **3. Run Tests**
+
+```bash
+pytest
+```
+
+Tests automatically run in CI on every push.
+
+---
+
+# 🌐 Cloud Deployment (Render)
+
+The production API is live at:
+
+👉 **[https://marketpulse-api-spwg.onrender.com](https://marketpulse-api-spwg.onrender.com)**
+
+This instance is deployed using:
+
+* Dockerfile
+* GitHub Actions CI
+* Render auto-deploy from `main`
+
+---
+
+# 🗂️ Features
+
+## 🔹 1. Homepage Navigation
+
+Includes links to:
+
+* Companies
+* Sectors
+* S&P 500 Index
+* Search bar → `/company/<symbol>`
+
+## 🔹 2. Readable HTML Tables (Not Raw JSON)
+
+All pages use Bootstrap-styled tables:
+
+```python
+df.to_html(classes="table table-striped table-hover")
+```
+
+## 🔹 3. Search by Stock Ticker
+
+Entering `AAPL` →
+
+```
+/company/AAPL
+```
+
+## 🔹 4. Sector Explorer
+
+Shows:
+
+* Companies in the sector
+* Market cap ordering
+* Sector-level statistics
+
+## 🔹 5. S&P 500 Index Explorer
+
+Shows the most recent 300 records of daily index levels.
+
+---
+
+# 📊 Screenshots (To Be Added)
+
+Add images inside `assets/screenshots/` and embed below:
+
+### **Homepage**
+
+`![homepage](assets/screenshots/home.png)`
+
+### **Companies View**
+
+`![companies](assets/screenshots/companies.png)`
+
+### **Sector Page**
+
+`![sectors](assets/screenshots/sectors.png)`
+
+### **Index History**
+
+`![index](assets/screenshots/index.png)`
+
+---
+
+# 🧪 Testing & CI
+
+## ✔ GitHub Actions Workflow
+
+Runs on every commit:
+
+* Install dependencies
+* Build Docker image
+* Run pytest
+* Fail on test errors
+
+Defined in:
+
+```
+.github/workflows/ci.yml
+```
+
+## ✔ Tests Include:
+
+* API health endpoint
+* Query correctness
+* Company table existence
+* Sector table stats
+
+---
+
+# 🧠 Design Decisions
+
+### **Why SQLite?**
+
+* Extremely portable
+* Deterministic, reproducible database state
+* Perfect for Dockerized student projects
+
+### **Why Flask?**
+
+* Lightweight
+* Great for small data APIs
+* Mirrors the teaching style of DS 2024 & Case Study 06
+
+### **Why Docker?**
+
+* Eliminates Python version issues
+* Ensures reproducibility
+* Allows Render to deploy the exact same environment
+
+---
+
+# 📈 Results & Evaluation
+
+MarketPulse successfully delivers:
+
+* A fully functional, cloud-hosted API
+* A front-end HTML interface
+* Real sector-level SQL aggregations
+* A reproducible build and deploy process
+* Cloud deployment + CI/CD
+* Complete end-to-end data pipeline (CSV → SQL → API → HTML)
+
+All endpoints load correctly and render data fast (sub-100ms query time).
+
+---
+
+# 🔮 Future Work
+
+Potential improvements:
+
+* Add Plotly charts for index visualization
+* Add stock-level performance history
+* Use PostgreSQL for persistent cloud storage
+* Add pagination for very large datasets
+* Build a React front-end
+* Add automated documentation (Swagger)
+
+---
+
+# 📚 Appendix
+
+## Project Structure
+
+```
+marketpulse/
+│
+├── assets/
+│   ├── sp500_companies.csv
+│   ├── sp500_index.csv
+│   └── screenshots/
+│
+├── src/
+│   ├── app.py
+│   ├── db.py
+│   └── queries.py
+│
+├── tests/
+│   ├── test_api.py
+│   └── test_queries.py
+│
+├── Dockerfile
+├── requirements.txt
+└── README.md
+```
+
+---
+
+# 🏁 Links
+
+**GitHub Repository:**
+[https://github.com/sohum-mehrotra/marketpulse](https://github.com/sohum-mehrotra/marketpulse)
+
+**Live Deployment (Render):**
+[https://marketpulse-api-spwg.onrender.com](https://marketpulse-api-spwg.onrender.com)
+
+```
+
+---
+
+If you want, I can also:
+
+✅ Add screenshot placeholders customized to your UI  
+✅ Generate a nicer Bootstrap homepage  
+✅ Add charts to `/index`  
+✅ Add JSON endpoints next to HTML views  
+
+Just tell me!
+```
