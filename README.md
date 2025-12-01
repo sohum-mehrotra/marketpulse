@@ -215,6 +215,10 @@ Add images inside `assets/screenshots/` and embed below:
 
 `![index](assets/screenshots/index.png)`
 
+### **Symbol Search**
+
+`![search](assets/screenshots/search.png)`
+
 ---
 
 # 🧪 Testing & CI
