@@ -79,10 +79,9 @@ def get_sector_companies_with_stats(sector: str | None = None) -> pd.DataFrame:
 
 def get_index_history(limit: int = 100) -> pd.DataFrame:
     sql = """
-    SELECT Date, "S&P500" as sp500
+    SELECT Date, SandP500 AS sp500
     FROM index_history
     ORDER BY Date DESC
     LIMIT :limit
     """
     return q(sql, {"limit": limit})
-
