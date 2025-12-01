@@ -237,12 +237,14 @@ def create_app() -> Flask:
         for key, val in metrics.items():
             text += f"{key.replace('/', '_')} {val}\n"
         return text, 200, {"Content-Type": "text/plain"}
-
-    return app
-
+    
     @app.get("/health")
     def health():
         return {"status": "ok"}, 200
+    
+    return app
+
+    
 
 
 
