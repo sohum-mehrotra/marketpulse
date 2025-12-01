@@ -3,6 +3,7 @@ import time
 from collections import Counter
 
 from flask import Flask, jsonify, request, redirect
+import pandas as pd
 
 from .db import init_db
 from . import queries
@@ -11,106 +12,164 @@ metrics = Counter()
 START_TIME = time.time()
 
 
+def df_to_html(df: pd.DataFrame, title: str):
+    """Convert DataFrame to clean HTML table with styling."""
+    table_html = df.to_html(
+        classes="data-table",
+        index=False,
+        border=0,
+        justify="center"
+    )
+
+    return f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>{title}</title>
+        <style>
+            body {{
+                font-family: Arial, sans-serif;
+                padding: 40px;
+                background: #f5f5f5;
+                text-align: center;
+            }}
+            h1 {{
+                color: #333;
+            }}
+            .data-table {{
+                margin-left: auto;
+                margin-right: auto;
+                border-collapse: collapse;
+                width: 85%;
+                background: white;
+                box-shadow: 0px 4px 12px rgba(0,0,0,0.1);
+            }}
+            .data-table th {{
+                background-color: #0066ff;
+                color: white;
+                padding: 10px;
+            }}
+            .data-table td {{
+                border: 1px solid #ddd;
+                padding: 8px;
+            }}
+            .btn {{
+                display: inline-block;
+                padding: 10px 20px;
+                margin: 10px;
+                background: #0066ff;
+                color: white;
+                border-radius: 6px;
+                text-decoration: none;
+                font-size: 16px;
+            }}
+            .btn:hover {{
+                background: #0050cc;
+            }}
+            .back {{
+                margin-top: 20px;
+                display: inline-block;
+                padding: 8px 16px;
+                background: #444;
+                color: white;
+                text-decoration: none;
+                border-radius: 5px;
+            }}
+        </style>
+    </head>
+    <body>
+
+    <h1>{title}</h1>
+
+    {table_html}
+
+    <br>
+    <a class="back" href="/">← Back Home</a>
+
+    </body>
+    </html>
+    """
+
+
 def create_app() -> Flask:
-    # Initialize DB (idempotent)
+    # DB init
     init_db()
 
     app = Flask(__name__)
 
     # Logging
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s [%(levelname)s] %(message)s",
-    )
+    logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
 
     @app.before_request
-    def _track_request():
+    def _track_req():
         metrics["requests_total"] += 1
         metrics[f"path_{request.path}"] += 1
 
     @app.after_request
-    def _log_response(response):
-        logger.info("%s %s -> %s", request.method, request.path, response.status_code)
-        return response
+    def _log_response(resp):
+        logger.info("%s %s → %s", request.method, request.path, resp.status_code)
+        return resp
 
     # ----------------------------------------------------------------------
-    # HOMEPAGE UI (HTML)
+    # HOMEPAGE
     # ----------------------------------------------------------------------
     @app.route("/")
     def home():
         return """
         <!DOCTYPE html>
-        <html lang="en">
+        <html>
         <head>
-            <meta charset="UTF-8" />
             <title>MarketPulse</title>
             <style>
-                body { 
-                    font-family: Arial, sans-serif; 
-                    background: #f9f9f9; 
-                    padding: 40px; 
-                    text-align: center;
-                }
+                body { font-family: Arial; padding: 40px; text-align: center; background: #f2f2f2; }
                 h1 { color: #333; }
                 .btn {
-                    display: inline-block;
-                    padding: 12px 22px;
+                    padding: 14px 24px;
                     margin: 10px;
-                    font-size: 18px;
-                    background-color: #0066ff;
+                    background: #0066ff;
                     color: white;
-                    border-radius: 6px;
+                    font-size: 20px;
+                    border-radius: 8px;
                     text-decoration: none;
                 }
-                .btn:hover { background-color: #004acc; }
-                .search-box { 
-                    margin-top: 30px; 
-                }
+                .btn:hover { background: #004acc; }
                 input {
-                    padding: 10px;
+                    padding: 12px;
                     font-size: 18px;
-                    width: 250px;
+                    width: 260px;
                 }
                 button {
-                    padding: 10px 18px;
+                    padding: 12px 20px;
                     font-size: 18px;
-                    margin-left: 8px;
-                    background-color: #28a745;
+                    background: #28a745;
                     color: white;
-                    border: none;
                     border-radius: 6px;
+                    border: none;
                 }
-                button:hover {
-                    background-color: #1e7c34;
-                }
+                button:hover { background: #1d7c34; }
             </style>
         </head>
-
         <body>
 
-            <h1>📈 Welcome to MarketPulse</h1>
-            <p>Your S&P 500 API, deployed on Render.</p>
+        <h1>📈 Welcome to MarketPulse</h1>
 
-            <div>
-                <a class="btn" href="/companies">View All Companies</a>
-                <a class="btn" href="/sectors">View Sectors</a>
-                <a class="btn" href="/index">S&P 500 Index</a>
-            </div>
+        <a class="btn" href="/companies">View All Companies</a>
+        <a class="btn" href="/sectors">View Sectors</a>
+        <a class="btn" href="/index">S&P 500 Index</a>
 
-            <div class="search-box">
-                <h3>Search for a Company</h3>
-                <form action="/go" method="post">
-                    <input type="text" name="symbol" placeholder="Enter stock ticker (e.g., AAPL)" required />
-                    <button type="submit">Go</button>
-                </form>
-            </div>
+        <div style="margin-top: 30px;">
+            <h3>Search for a Company</h3>
+            <form action="/go" method="post">
+                <input name="symbol" placeholder="Enter ticker (ex: AAPL)">
+                <button type="submit">Go</button>
+            </form>
+        </div>
 
         </body>
         </html>
         """
 
-    # Redirect after ticker search
     @app.route("/go", methods=["POST"])
     def go():
         symbol = request.form.get("symbol", "").upper().strip()
@@ -119,65 +178,70 @@ def create_app() -> Flask:
         return redirect(f"/company/{symbol}")
 
     # ----------------------------------------------------------------------
-    # API ROUTES
+    # COMPANIES
     # ----------------------------------------------------------------------
-
-    @app.get("/health")
-    def health():
-        return jsonify({"status": "ok", "uptime_seconds": int(time.time() - START_TIME)})
-
     @app.get("/companies")
     def companies():
-        sector = request.args.get("sector")
-        limit = request.args.get("limit", default=50, type=int)
-        df = queries.get_companies(limit=limit, sector=sector)
-        return jsonify(df.to_dict(orient="records"))
+        if request.args.get("format") == "json":
+            df = queries.get_companies(limit=500)
+            return jsonify(df.to_dict(orient="records"))
 
+        df = queries.get_companies(limit=500)
+        return df_to_html(df, "All S&P 500 Companies")
+
+    # ----------------------------------------------------------------------
+    # SINGLE COMPANY
+    # ----------------------------------------------------------------------
     @app.get("/company/<symbol>")
-    def company(symbol: str):
+    def company(symbol):
         df = queries.get_company(symbol.upper())
-        if df.empty:
-            return jsonify({"error": "Symbol not found"}), 404
-        return jsonify(df.to_dict(orient="records")[0])
 
+        if df.empty:
+            return df_to_html(pd.DataFrame([{"error": "Symbol not found"}]), f"{symbol} Not Found")
+
+        return df_to_html(df, f"Company: {symbol.upper()}")
+
+    # ----------------------------------------------------------------------
+    # SECTORS
+    # ----------------------------------------------------------------------
     @app.get("/sectors")
     def sectors():
-        df = queries.get_sectors()
-        return jsonify(df["Sector"].tolist())
+        df = queries.get_sectors().rename(columns={"Sector": "S&P 500 Sectors"})
+        return df_to_html(df, "S&P 500 Sectors")
 
+    # ----------------------------------------------------------------------
+    # COMPANIES IN SECTOR
+    # ----------------------------------------------------------------------
     @app.get("/sector/<sector>/companies")
-    def sector_companies(sector: str):
+    def sector_companies(sector):
         df = queries.get_sector_companies_with_stats(sector)
         if df.empty:
-            return jsonify({"error": "Sector not found"}), 404
-        return jsonify(df.to_dict(orient="records"))
+            return df_to_html(pd.DataFrame([{"error": "Sector not found"}]), f"{sector} Not Found")
 
+        return df_to_html(df, f"Sector: {sector}")
+
+    # ----------------------------------------------------------------------
+    # INDEX
+    # ----------------------------------------------------------------------
     @app.get("/index")
     def index_history():
-        limit = request.args.get("limit", default=100, type=int)
-        df = queries.get_index_history(limit=limit)
-        return jsonify(df.to_dict(orient="records"))
+        df = queries.get_index_history(limit=300)
+        return df_to_html(df, "S&P 500 Index History")
 
     # ----------------------------------------------------------------------
     # METRICS
     # ----------------------------------------------------------------------
     @app.get("/metrics")
     def metrics_endpoint():
-        lines = [
-            f"marketpulse_uptime_seconds {int(time.time() - START_TIME)}",
-        ]
-        for key, value in metrics.items():
-            metric_name = key.replace("/", "_").replace("-", "_")
-            lines.append(f"marketpulse_{metric_name} {value}")
-        text_body = "\n".join(lines) + "\n"
-        return text_body, 200, {"Content-Type": "text/plain; version=0.0.4"}
+        text = f"uptime_seconds {int(time.time() - START_TIME)}\n"
+        for key, val in metrics.items():
+            text += f"{key.replace('/', '_')} {val}\n"
+        return text, 200, {"Content-Type": "text/plain"}
 
     return app
 
 
-# For gunicorn
 app = create_app()
 
-# For local dev
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=10000)
