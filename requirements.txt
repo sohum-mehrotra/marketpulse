@@ -1,6 +1,6 @@
+sqlalchemy
 flask
 pandas
-sqlalchemy
 gunicorn
 pytest
 
