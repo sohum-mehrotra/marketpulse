@@ -122,11 +122,11 @@ docker build -t marketpulse .
 ### Run the container:
 
 ```bash
-docker run --rm -p 8080:8080 marketpulse
+docker run --rm -p 10000:10000 marketpulse
 ```
 
 Your app is available at:
-👉 **[http://localhost:10000](http://localhost:8080)**
+👉 **[http://localhost:10000](http://localhost:10000)**
 
 ---
 
