@@ -33,10 +33,10 @@ def create_app() -> Flask:
     def _log_response(response):
         logger.info("%s %s -> %s", request.method, request.path, response.status_code)
         return response
-
+    
     @app.route("/")
-def home():
-    return """
+    def home():
+        return """
     <!DOCTYPE html>
     <html lang="en">
     <head>
@@ -83,18 +83,18 @@ def home():
             }
         </style>
     </head>
-
+    
     <body>
-
+    
         <h1>📈 Welcome to MarketPulse</h1>
-        <p>Your S&P 500 API, deployed on Render.</p>
-
+        <p>Your S&P 500 API deployed on Render.</p>
+    
         <div>
             <a class="btn" href="/companies">View All Companies</a>
             <a class="btn" href="/sectors">View Sectors</a>
             <a class="btn" href="/index">S&P 500 Index</a>
         </div>
-
+    
         <div class="search-box">
             <h3>Search for a Company</h3>
             <form action="/go" method="post">
@@ -102,10 +102,11 @@ def home():
                 <button type="submit">Go</button>
             </form>
         </div>
-
+    
     </body>
     </html>
     """
+
     
     @app.get("/health")
     def health():
@@ -132,6 +133,8 @@ def home():
             return redirect("/")
         return redirect(f"/company/{symbol}")
 
+
+    
     @app.get("/sectors")
     def sectors():
         df = queries.get_sectors()
