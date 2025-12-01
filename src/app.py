@@ -20,27 +20,22 @@ def render_table(title, rows, columns):
             body {{ font-family: Arial, sans-serif; padding: 20px; }}
             h1 {{ text-align: center; }}
             table {{
-                width: 90%;
+                width: 95%;
                 border-collapse: collapse;
                 margin: 20px auto;
-                font-size: 16px;
             }}
             th, td {{
                 border: 1px solid #ccc;
                 padding: 8px 12px;
+                font-size: 15px;
                 text-align: left;
             }}
             th {{
                 background-color: #007BFF;
                 color: white;
             }}
-            tr:nth-child(even) {{
-                background-color: #f2f2f2;
-            }}
-            a {{
-                color: #007BFF;
-                text-decoration: none;
-            }}
+            tr:nth-child(even) {{ background-color: #f2f2f2; }}
+            a {{ text-decoration: none; color: #007BFF; }}
         </style>
     </head>
     <body>
@@ -48,12 +43,10 @@ def render_table(title, rows, columns):
         <table>
             <tr>
     """
-    # Add table headers
     for col in columns:
         html += f"<th>{col}</th>"
     html += "</tr>"
 
-    # Add table rows
     for r in rows:
         html += "<tr>"
         for col in columns:
@@ -62,11 +55,14 @@ def render_table(title, rows, columns):
 
     html += """
         </table>
-        <p style="text-align:center;"><a href="/">Back to Home</a></p>
+        <p style="text-align:center;">
+            <a href="/">Back to Home</a>
+        </p>
     </body>
     </html>
     """
     return html
+
 
 
 
@@ -169,13 +165,26 @@ def create_app() -> Flask:
     @app.get("/health")
     def health():
         return jsonify({"status": "ok", "uptime_seconds": int(time.time() - START_TIME)})
-
+    
     @app.route("/companies")
     def companies():
         from .queries import get_all_companies
-        rows = get_all_companies()
-        columns = ["symbol", "shortname", "sector", "industry", "currentprice", "marketcap"]
+        raw = get_all_companies()
+    
+        rows = []
+        for c in raw:
+            rows.append({
+                "symbol": c.get("Symbol") or c.get("symbol"),
+                "name": c.get("Shortname") or c.get("name"),
+                "sector": c.get("Sector") or c.get("sector"),
+                "industry": c.get("Industry") or c.get("industry"),
+                "price": c.get("Currentprice") or c.get("currentprice"),
+                "marketcap": c.get("Marketcap") or c.get("marketcap"),
+            })
+    
+        columns = ["symbol", "name", "sector", "industry", "price", "marketcap"]
         return render_table("S&P 500 Companies", rows, columns)
+
 
 
     @app.get("/company/<symbol>")
@@ -196,30 +205,55 @@ def create_app() -> Flask:
     @app.route("/sectors")
     def sectors():
         from .queries import get_sectors
-        rows = [{"sector": s} for s in get_sectors()]
+        raw = get_sectors()
+    
+        # Convert tuples → strings
+        sector_list = [str(s[0]) if isinstance(s, tuple) else str(s) for s in raw]
+    
+        rows = [{"sector": s} for s in sector_list]
         return render_table("Sectors", rows, ["sector"])
 
-    
+
+        
     @app.route("/company/<symbol>")
     def company_profile(symbol):
         from .queries import get_company_by_symbol
         c = get_company_by_symbol(symbol.upper())
     
-        if c is None:
-            return f"<h1>Company '{symbol}' not found.</h1><p><a href='/'>Back</a></p>", 404
+        if not c:
+            return f"<h1>Company '{symbol}' not found.</h1><p><a href='/'>Back</a></p>"
     
-        # convert to table structure
-        rows = [c]
-        cols = list(c.keys())
-        return render_table(f"Company: {symbol}", rows, cols)
+        normalized = {
+            "symbol": c.get("Symbol") or c.get("symbol"),
+            "name": c.get("Shortname") or c.get("name"),
+            "sector": c.get("Sector") or c.get("sector"),
+            "industry": c.get("Industry") or c.get("industry"),
+            "price": c.get("Currentprice") or c.get("currentprice"),
+            "marketcap": c.get("Marketcap") or c.get("marketcap"),
+        }
+    
+        return render_table(f"Company: {symbol.upper()}", [normalized], list(normalized.keys()))
+
     
 
     @app.route("/index")
     def index_page():
         from .queries import get_index_data
-        rows = get_index_data()
+        raw = get_index_data()
+    
+        rows = []
+        for r in raw:
+            rows.append({
+                "date": r.get("date") or r.get("Date"),
+                "open": r.get("open") or r.get("Open"),
+                "high": r.get("high") or r.get("High"),
+                "low": r.get("low") or r.get("Low"),
+                "close": r.get("close") or r.get("Close"),
+                "volume": r.get("volume") or r.get("Volume"),
+            })
+    
         columns = ["date", "open", "high", "low", "close", "volume"]
-        return render_table("S&P 500 Index Data", rows, columns)
+        return render_table("S&P 500 Index", rows, columns)
 
 
     @app.get("/metrics")
